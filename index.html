@@ -98,7 +98,6 @@
             width: 100%;
             height: 400px;
             background-color: #000033;
-            background-image: url('/api/placeholder/800/400');
             background-size: cover;
             position: relative;
             overflow: hidden;
@@ -113,14 +112,17 @@
             width: 50px;
             height: 50px;
             z-index: 10;
+            background-color: red; /* Default player color */
         }
         .obstacle {
             width: 30px;
             height: 30px;
+            background-color: gray;
         }
         .power-up {
             width: 25px;
             height: 25px;
+            background-color: yellow;
             animation: pulse 1s infinite alternate;
         }
         @keyframes pulse {
@@ -140,20 +142,6 @@
             font-size: 24px;
             z-index: 100;
         }
-        #loading-screen {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #000;
-            z-index: 200;
-            color: #fff;
-            font-size: 24px;
-        }
         @media (max-width: 600px) {
             .celestial-body {
                 transform: scale(0.7);
@@ -169,7 +157,6 @@
     </style>
 </head>
 <body>
-    <div id="loading-screen">Loading...</div>
     <div id="game-container">
         <div id="menu">
             <h1>Jovi's World</h1>
@@ -251,28 +238,28 @@
 
     <script>
         const celestialBodies = [
-            { name: "Sun", image: "/api/placeholder/80/80", alt: "The Sun", size: 80, facts: ["The Sun is a star at the center of our Solar System", "It's about 4.6 billion years old", "The Sun's surface temperature is about 10,000°F (5,500°C)"] },
-            { name: "Mercury", image: "/api/placeholder/20/20", alt: "Mercury", size: 20, facts: ["Smallest planet in our Solar System", "Closest planet to the Sun", "Has no moons and no atmosphere"] },
-            { name: "Venus", image: "/api/placeholder/38/38", alt: "Venus", size: 38, facts: ["Often called Earth's twin due to similar size", "Rotates backwards compared to most planets", "Hottest planet in our Solar System"] },
-            { name: "Earth", image: "/api/placeholder/40/40", alt: "Earth", size: 40, facts: ["Our home planet", "Only known planet with life", "Has one natural satellite - the Moon"] },
-            { name: "Mars", image: "/api/placeholder/30/30", alt: "Mars", size: 30, facts: ["Known as the Red Planet", "Has two moons: Phobos and Deimos", "Home to the largest volcano in the Solar System"] },
-            { name: "Jupiter", image: "/api/placeholder/70/70", alt: "Jupiter", size: 70, facts: ["Largest planet in our Solar System", "Has a Great Red Spot - a giant storm", "Has at least 79 moons"] },
-            { name: "Saturn", image: "/api/placeholder/60/60", alt: "Saturn", size: 60, facts: ["Known for its beautiful ring system", "Less dense than water - it would float in a giant bathtub", "Has 82 known moons"] },
-            { name: "Uranus", image: "/api/placeholder/50/50", alt: "Uranus", size: 50, facts: ["An ice giant planet", "Rotates on its side", "Has 27 known moons"] },
-            { name: "Neptune", image: "/api/placeholder/48/48", alt: "Neptune", size: 48, facts: ["The windiest planet in our Solar System", "Has 14 known moons", "The farthest known planet from the Sun"] }
+            { name: "Sun", color: "#FFDD33", size: 80, facts: ["The Sun is a star at the center of our Solar System", "It's about 4.6 billion years old", "The Sun's surface temperature is about 10,000°F (5,500°C)"] },
+            { name: "Mercury", color: "#BEBEBE", size: 20, facts: ["Smallest planet in our Solar System", "Closest planet to the Sun", "Has no moons and no atmosphere"] },
+            { name: "Venus", color: "#E5C07B", size: 38, facts: ["Often called Earth's twin due to similar size", "Rotates backwards compared to most planets", "Hottest planet in our Solar System"] },
+            { name: "Earth", color: "#4A90E2", size: 40, facts: ["Our home planet", "Only known planet with life", "Has one natural satellite - the Moon"] },
+            { name: "Mars", color: "#FF5733", size: 30, facts: ["Known as the Red Planet", "Has two moons: Phobos and Deimos", "Home to the largest volcano in the Solar System"] },
+            { name: "Jupiter", color: "#D4A36E", size: 70, facts: ["Largest planet in our Solar System", "Has a Great Red Spot - a giant storm", "Has at least 79 moons"] },
+            { name: "Saturn", color: "#F5E5B6", size: 60, facts: ["Known for its beautiful ring system", "Less dense than water - it would float in a giant bathtub", "Has 82 known moons"] },
+            { name: "Uranus", color: "#7FB8D8", size: 50, facts: ["An ice giant planet", "Rotates on its side", "Has 27 known moons"] },
+            { name: "Neptune", color: "#2E3A87", size: 48, facts: ["The windiest planet in our Solar System", "Has 14 known moons", "The farthest known planet from the Sun"] }
         ];
 
         const obstacleTypes = [
-            { name: "Asteroid", image: "/api/placeholder/30/30", alt: "Asteroid" },
-            { name: "Comet", image: "/api/placeholder/30/30", alt: "Comet" },
-            { name: "Satellite", image: "/api/placeholder/30/30", alt: "Satellite" }
+            { name: "Asteroid", color: "#8B8B8B" },
+            { name: "Comet", color: "#7D7D7D" },
+            { name: "Satellite", color: "#9A9A9A" }
         ];
 
         const powerUpTypes = [
-            { name: "Speed", image: "/api/placeholder/25/25", alt: "Speed Power-Up" },
-            { name: "Shield", image: "/api/placeholder/25/25", alt: "Shield Power-Up" },
-            { name: "Magnet", image: "/api/placeholder/25/25", alt: "Magnet Power-Up" },
-            { name: "Shrink", image: "/api/placeholder/25/25", alt: "Shrink Power-Up" }
+            { name: "Speed", color: "#FFD700" },
+            { name: "Shield", color: "#00FF00" },
+            { name: "Magnet", color: "#FF00FF" },
+            { name: "Shrink", color: "#00FFFF" }
         ];
 
         let score = 0;
@@ -325,10 +312,9 @@
                 
                 const bodyEl = document.createElement('div');
                 bodyEl.className = 'body';
-                bodyEl.style.backgroundImage = `url(${body.image})`;
+                bodyEl.style.backgroundColor = body.color; // Assign planet color
                 bodyEl.style.width = `${body.size}px`;
                 bodyEl.style.height = `${body.size}px`;
-                bodyEl.alt = `${body.alt}`;
                 
                 const labelEl = document.createElement('div');
                 labelEl.className = 'label';
@@ -353,7 +339,7 @@
                 
                 const colorBox = document.createElement('div');
                 colorBox.className = 'legend-color';
-                colorBox.style.backgroundImage = `url(${body.image})`;
+                colorBox.style.backgroundColor = body.color; // Display planet color in legend
                 
                 const nameSpan = document.createElement('span');
                 nameSpan.textContent = body.name;
@@ -391,13 +377,16 @@
             hideAllScreens();
             document.getElementById('mini-game').style.display = 'block';
             document.getElementById('mini-game-title').textContent = `${currentBody.name} Space Adventure`;
-            
+
             const player = document.getElementById('player');
-            player.style.backgroundImage = `url(${currentBody.image})`;
+            player.style.backgroundColor = currentBody.color;  // Set player color to the planet's color
             player.style.width = `${currentBody.size}px`;
             player.style.height = `${currentBody.size}px`;
             player.style.left = '10px';
             player.style.top = '175px';
+
+            // Add player to mini-game area
+            document.getElementById('mini-game-area').appendChild(player);
 
             score = 0;
             level = 1;
@@ -431,8 +420,7 @@
         function createObstacle() {
             const obstacle = document.createElement('div');
             obstacle.className = 'obstacle';
-            const obstacleType = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
-            obstacle.style.backgroundImage = `url(${obstacleType.image})`;
+            obstacle.style.backgroundColor = '#8B8B8B';  // Default obstacle color
             obstacle.style.left = '400px';
             obstacle.style.top = `${Math.random() * 370}px`;
             document.getElementById('mini-game-area').appendChild(obstacle);
@@ -442,8 +430,7 @@
         function createPowerUp() {
             const powerUp = document.createElement('div');
             powerUp.className = 'power-up';
-            const powerUpType = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
-            powerUp.style.backgroundImage = `url(${powerUpType.image})`;
+            powerUp.style.backgroundColor = '#FFD700';  // Default power-up color
             powerUp.style.left = '400px';
             powerUp.style.top = `${Math.random() * 370}px`;
             document.getElementById('mini-game-area').appendChild(powerUp);
@@ -573,9 +560,8 @@
 
         function applyPowerUp(powerUp) {
             const player = document.getElementById('player');
-            const powerUpType = powerUpTypes.find(type => powerUp.style.backgroundImage.includes(type.image));
-            playerPowerUp = powerUpType.name.toLowerCase();
-            
+            playerPowerUp = 'shield';  // For now, apply shield power-up
+
             switch(playerPowerUp) {
                 case 'speed':
                     player.style.boxShadow = '0 0 10px #44ff44';
@@ -586,23 +572,6 @@
                     break;
                 case 'shield':
                     player.style.boxShadow = '0 0 10px #4444ff';
-                    break;
-                case 'magnet':
-                    player.style.boxShadow = '0 0 10px #ff44ff';
-                    setTimeout(() => {
-                        playerPowerUp = null;
-                        player.style.boxShadow = 'none';
-                    }, 5000);
-                    break;
-                case 'shrink':
-                    const originalSize = player.style.width;
-                    player.style.width = `${parseInt(player.style.width) / 2}px`;
-                    player.style.height = `${parseInt(player.style.height) / 2}px`;
-                    setTimeout(() => {
-                        player.style.width = originalSize;
-                        player.style.height = originalSize;
-                        playerPowerUp = null;
-                    }, 5000);
                     break;
             }
 
@@ -721,60 +690,13 @@
             }
         }
 
-       // Preload images with a timeout to ensure loading screen doesn't hang indefinitely
-function preloadImages() {
-    let imagesLoaded = 0;
-    const totalImages = celestialBodies.length + obstacleTypes.length + powerUpTypes.length;
-    let timeoutReached = false;
-
-    const checkAllImagesLoaded = () => {
-        imagesLoaded++;
-        if (imagesLoaded === totalImages && !timeoutReached) {
-            document.getElementById('loading-screen').style.display = 'none';
-            showMenu();
-        }
-    };
-
-    // Fallback timeout (e.g., 5 seconds)
-    setTimeout(() => {
-        timeoutReached = true;
-        document.getElementById('loading-screen').style.display = 'none';
-        showMenu();
-    }, 5000);  // 5 seconds timeout
-
-    celestialBodies.forEach(body => {
-        const img = new Image();
-        img.src = body.image;
-        img.alt = body.alt;
-        img.onload = checkAllImagesLoaded;
-        img.onerror = checkAllImagesLoaded; // To handle cases where the image fails to load
-    });
-
-    obstacleTypes.forEach(type => {
-        const img = new Image();
-        img.src = type.image;
-        img.alt = type.alt;
-        img.onload = checkAllImagesLoaded;
-        img.onerror = checkAllImagesLoaded;
-    });
-
-    powerUpTypes.forEach(type => {
-        const img = new Image();
-        img.src = type.image;
-        img.alt = type.alt;
-        img.onload = checkAllImagesLoaded;
-        img.onerror = checkAllImagesLoaded;
-    });
-}
-
-
         // Initialize the game
         function init() {
             const savedSettings = localStorage.getItem('gameSettings');
             if (savedSettings) {
                 settings = JSON.parse(savedSettings);
             }
-            preloadImages();
+            showMenu();
         }
 
         // Start the game
