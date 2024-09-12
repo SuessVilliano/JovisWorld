@@ -721,40 +721,52 @@
             }
         }
 
-        // Preload images
-        function preloadImages() {
-            let imagesLoaded = 0;
-            const totalImages = celestialBodies.length + obstacleTypes.length + powerUpTypes.length;
+       // Preload images with a timeout to ensure loading screen doesn't hang indefinitely
+function preloadImages() {
+    let imagesLoaded = 0;
+    const totalImages = celestialBodies.length + obstacleTypes.length + powerUpTypes.length;
+    let timeoutReached = false;
 
-            const checkAllImagesLoaded = () => {
-                imagesLoaded++;
-                if (imagesLoaded === totalImages) {
-                    document.getElementById('loading-screen').style.display = 'none';
-                    showMenu();
-                }
-            };
-
-            celestialBodies.forEach(body => {
-                const img = new Image();
-                img.src = body.image;
-                img.alt = body.alt;
-                img.onload = checkAllImagesLoaded;
-            });
-
-            obstacleTypes.forEach(type => {
-                const img = new Image();
-                img.src = type.image;
-                img.alt = type.alt;
-                img.onload = checkAllImagesLoaded;
-            });
-
-            powerUpTypes.forEach(type => {
-                const img = new Image();
-                img.src = type.image;
-                img.alt = type.alt;
-                img.onload = checkAllImagesLoaded;
-            });
+    const checkAllImagesLoaded = () => {
+        imagesLoaded++;
+        if (imagesLoaded === totalImages && !timeoutReached) {
+            document.getElementById('loading-screen').style.display = 'none';
+            showMenu();
         }
+    };
+
+    // Fallback timeout (e.g., 5 seconds)
+    setTimeout(() => {
+        timeoutReached = true;
+        document.getElementById('loading-screen').style.display = 'none';
+        showMenu();
+    }, 5000);  // 5 seconds timeout
+
+    celestialBodies.forEach(body => {
+        const img = new Image();
+        img.src = body.image;
+        img.alt = body.alt;
+        img.onload = checkAllImagesLoaded;
+        img.onerror = checkAllImagesLoaded; // To handle cases where the image fails to load
+    });
+
+    obstacleTypes.forEach(type => {
+        const img = new Image();
+        img.src = type.image;
+        img.alt = type.alt;
+        img.onload = checkAllImagesLoaded;
+        img.onerror = checkAllImagesLoaded;
+    });
+
+    powerUpTypes.forEach(type => {
+        const img = new Image();
+        img.src = type.image;
+        img.alt = type.alt;
+        img.onload = checkAllImagesLoaded;
+        img.onerror = checkAllImagesLoaded;
+    });
+}
+
 
         // Initialize the game
         function init() {
