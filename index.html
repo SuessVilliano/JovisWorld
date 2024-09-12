@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jovi's World - Ultimate Planet Adventure</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+            overflow: hidden;
+        }
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        #menu, #instructions, #game-area, #planet-info, #mini-game, #high-scores, #settings {
+            display: none;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .celestial-body {
+            position: absolute;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .celestial-body:hover {
+            transform: scale(1.1);
+        }
+        .body {
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            background-size: cover;
+            background-position: center;
+        }
+        .label {
+            font-size: 12px;
+            color: #fff;
+            text-shadow: 1px 1px 2px #000;
+            margin-top: 5px;
+        }
+        #score, #controls, #level {
+            position: absolute;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 5px;
+        }
+        #score { right: 10px; top: 10px; }
+        #controls { left: 10px; top: 10px; }
+        #level { left: 50%; transform: translateX(-50%); top: 10px; }
+        #legend {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            background-size: cover;
+            background-position: center;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 4px 2px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #mini-game-area {
+            width: 100%;
+            height: 400px;
+            background-color: #000033;
+            background-image: url('/api/placeholder/800/400');
+            background-size: cover;
+            position: relative;
+            overflow: hidden;
+        }
+        #player, .obstacle, .power-up {
+            position: absolute;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        #player {
+            width: 50px;
+            height: 50px;
+            z-index: 10;
+        }
+        .obstacle {
+            width: 30px;
+            height: 30px;
+        }
+        .power-up {
+            width: 25px;
+            height: 25px;
+            animation: pulse 1s infinite alternate;
+        }
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.2); }
+        }
+        #pause-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            z-index: 100;
+        }
+        #loading-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            z-index: 200;
+            color: #fff;
+            font-size: 24px;
+        }
+        @media (max-width: 600px) {
+            .celestial-body {
+                transform: scale(0.7);
+            }
+            #mini-game-area {
+                height: 300px;
+            }
+            button {
+                padding: 8px 16px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-screen">Loading...</div>
+    <div id="game-container">
+        <div id="menu">
+            <h1>Jovi's World</h1>
+            <button onclick="showInstructions()">Start Game</button>
+            <button onclick="showHighScores()">High Scores</button>
+            <button onclick="showSettings()">Settings</button>
+        </div>
+        <div id="instructions">
+            <h2>How to Play</h2>
+            <p>Welcome to Jovi's World! Learn about planets and have fun!</p>
+            <p>1. Click on celestial bodies to learn about them.</p>
+            <p>2. Play the Space Adventure game with your chosen planet!</p>
+            <p>3. Use arrow keys, WASD, or touch controls to move and avoid obstacles.</p>
+            <p>4. Collect power-ups for special abilities!</p>
+            <button onclick="startGame()">Let's Go!</button>
+        </div>
+        <div id="game-area">
+            <div id="score">Score: <span id="score-value">0</span></div>
+            <div id="level">Level: <span id="level-value">1</span></div>
+            <div id="controls">
+                <button onclick="toggleLabels()">Toggle Labels</button>
+                <button onclick="toggleLegend()">Toggle Legend</button>
+                <button onclick="toggleMusic()">Toggle Music</button>
+            </div>
+            <div id="legend"></div>
+        </div>
+        <div id="planet-info">
+            <h2 id="body-name"></h2>
+            <p id="body-facts"></p>
+            <button onclick="startMiniGame()">Play Space Adventure</button>
+            <button onclick="closePlanetInfo()">Back to Solar System</button>
+        </div>
+        <div id="mini-game">
+            <h2 id="mini-game-title"></h2>
+            <div id="mini-game-area">
+                <div id="player"></div>
+                <div id="pause-overlay" style="display: none;">PAUSED</div>
+            </div>
+            <button onclick="togglePause()">Pause/Resume</button>
+            <button onclick="endMiniGame()">End Mini-Game</button>
+        </div>
+        <div id="high-scores">
+            <h2>High Scores</h2>
+            <ol id="high-score-list"></ol>
+            <button onclick="showMenu()">Back to Menu</button>
+        </div>
+        <div id="settings">
+            <h2>Game Settings</h2>
+            <label for="difficulty">Difficulty:</label>
+            <select id="difficulty">
+                <option value="easy">Easy</option>
+                <option value="normal" selected>Normal</option>
+                <option value="hard">Hard</option>
+            </select>
+            <br>
+            <label for="sound-effects">Sound Effects:</label>
+            <input type="checkbox" id="sound-effects" checked>
+            <br>
+            <label for="music">Background Music:</label>
+            <input type="checkbox" id="music" checked>
+            <br>
+            <button onclick="saveSettings()">Save Settings</button>
+            <button onclick="showMenu()">Back to Menu</button>
+        </div>
+    </div>
+
+    <audio id="background-music" loop>
+        <source src="/api/placeholder/audio/background-music.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="collect-sound">
+        <source src="/api/placeholder/audio/collect.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="crash-sound">
+        <source src="/api/placeholder/audio/crash.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="power-up-sound">
+        <source src="/api/placeholder/audio/power-up.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const celestialBodies = [
+            { name: "Sun", image: "/api/placeholder/80/80", alt: "The Sun", size: 80, facts: ["The Sun is a star at the center of our Solar System", "It's about 4.6 billion years old", "The Sun's surface temperature is about 10,000°F (5,500°C)"] },
+            { name: "Mercury", image: "/api/placeholder/20/20", alt: "Mercury", size: 20, facts: ["Smallest planet in our Solar System", "Closest planet to the Sun", "Has no moons and no atmosphere"] },
+            { name: "Venus", image: "/api/placeholder/38/38", alt: "Venus", size: 38, facts: ["Often called Earth's twin due to similar size", "Rotates backwards compared to most planets", "Hottest planet in our Solar System"] },
+            { name: "Earth", image: "/api/placeholder/40/40", alt: "Earth", size: 40, facts: ["Our home planet", "Only known planet with life", "Has one natural satellite - the Moon"] },
+            { name: "Mars", image: "/api/placeholder/30/30", alt: "Mars", size: 30, facts: ["Known as the Red Planet", "Has two moons: Phobos and Deimos", "Home to the largest volcano in the Solar System"] },
+            { name: "Jupiter", image: "/api/placeholder/70/70", alt: "Jupiter", size: 70, facts: ["Largest planet in our Solar System", "Has a Great Red Spot - a giant storm", "Has at least 79 moons"] },
+            { name: "Saturn", image: "/api/placeholder/60/60", alt: "Saturn", size: 60, facts: ["Known for its beautiful ring system", "Less dense than water - it would float in a giant bathtub", "Has 82 known moons"] },
+            { name: "Uranus", image: "/api/placeholder/50/50", alt: "Uranus", size: 50, facts: ["An ice giant planet", "Rotates on its side", "Has 27 known moons"] },
+            { name: "Neptune", image: "/api/placeholder/48/48", alt: "Neptune", size: 48, facts: ["The windiest planet in our Solar System", "Has 14 known moons", "The farthest known planet from the Sun"] }
+        ];
+
+        const obstacleTypes = [
+            { name: "Asteroid", image: "/api/placeholder/30/30", alt: "Asteroid" },
+            { name: "Comet", image: "/api/placeholder/30/30", alt: "Comet" },
+            { name: "Satellite", image: "/api/placeholder/30/30", alt: "Satellite" }
+        ];
+
+        const powerUpTypes = [
+            { name: "Speed", image: "/api/placeholder/25/25", alt: "Speed Power-Up" },
+            { name: "Shield", image: "/api/placeholder/25/25", alt: "Shield Power-Up" },
+            { name: "Magnet", image: "/api/placeholder/25/25", alt: "Magnet Power-Up" },
+            { name: "Shrink", image: "/api/placeholder/25/25", alt: "Shrink Power-Up" }
+        ];
+
+        let score = 0;
+        let level = 1;
+        let showLabels = true;
+        let showLegend = true;
+        let currentBody = null;
+        let gameInterval;
+        let obstacles = [];
+        let powerUps = [];
+        let playerPowerUp = null;
+        let isPaused = false;
+        let settings = {
+            difficulty: 'normal',
+            soundEffects: true,
+            music: true
+        };
+
+        function showMenu() {
+            hideAllScreens();
+            document.getElementById('menu').style.display = 'block';
+        }
+
+        function showInstructions() {
+            hideAllScreens();
+            document.getElementById('instructions').style.display = 'block';
+        }
+
+        function startGame() {
+            hideAllScreens();
+            document.getElementById('game-area').style.display = 'block';
+            createCelestialBodies();
+            createLegend();
+            animatePlanets();
+            if (settings.music) {
+                document.getElementById('background-music').play();
+            }
+        }
+
+        function hideAllScreens() {
+            const screens = ['menu', 'instructions', 'game-area', 'planet-info', 'mini-game', 'high-scores', 'settings'];
+            screens.forEach(screen => document.getElementById(screen).style.display = 'none');
+        }
+
+        function createCelestialBodies() {
+            const gameArea = document.getElementById('game-area');
+            celestialBodies.forEach((body, index) => {
+                const bodyContainer = document.createElement('div');
+                bodyContainer.className = 'celestial-body';
+                
+                const bodyEl = document.createElement('div');
+                bodyEl.className = 'body';
+                bodyEl.style.backgroundImage = `url(${body.image})`;
+                bodyEl.style.width = `${body.size}px`;
+                bodyEl.style.height = `${body.size}px`;
+                bodyEl.alt = `${body.alt}`;
+                
+                const labelEl = document.createElement('div');
+                labelEl.className = 'label';
+                labelEl.textContent = body.name;
+
+                bodyContainer.appendChild(bodyEl);
+                bodyContainer.appendChild(labelEl);
+                bodyContainer.style.left = `${Math.random() * (window.innerWidth - body.size)}px`;
+                bodyContainer.style.top = `${Math.random() * (window.innerHeight - body.size)}px`;
+                bodyContainer.onclick = () => showBodyInfo(body);
+                
+                gameArea.appendChild(bodyContainer);
+            });
+        }
+
+        function createLegend() {
+            const legend = document.getElementById('legend');
+            legend.innerHTML = '';
+            celestialBodies.forEach(body => {
+                const legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+                
+                const colorBox = document.createElement('div');
+                colorBox.className = 'legend-color';
+                colorBox.style.backgroundImage = `url(${body.image})`;
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = body.name;
+                
+                legendItem.appendChild(colorBox);
+                legendItem.appendChild(nameSpan);
+                legend.appendChild(legendItem);
+            });
+        }
+
+        function animatePlanets() {
+            const bodies = document.querySelectorAll('.celestial-body');
+            bodies.forEach((body, index) => {
+                if (index === 0) return; // Skip the Sun
+                gsap.to(body, {
+                    duration: 10 + index * 5,
+                    rotation: 360,
+                    repeat: -1,
+                    ease: "none",
+                    x: Math.cos(index * 0.5) * 200,
+                    y: Math.sin(index * 0.5) * 100,
+                });
+            });
+        }
+
+        function showBodyInfo(body) {
+            currentBody = body;
+            document.getElementById('body-name').textContent = body.name;
+            document.getElementById('body-facts').textContent = body.facts[Math.floor(Math.random() * body.facts.length)];
+            hideAllScreens();
+            document.getElementById('planet-info').style.display = 'block';
+        }
+
+        function startMiniGame() {
+            hideAllScreens();
+            document.getElementById('mini-game').style.display = 'block';
+            document.getElementById('mini-game-title').textContent = `${currentBody.name} Space Adventure`;
+            
+            const player = document.getElementById('player');
+            player.style.backgroundImage = `url(${currentBody.image})`;
+            player.style.width = `${currentBody.size}px`;
+            player.style.height = `${currentBody.size}px`;
+            player.style.left = '10px';
+            player.style.top = '175px';
+
+            score = 0;
+            level = 1;
+            updateScore();
+            updateLevel();
+            obstacles = [];
+            powerUps = [];
+            playerPowerUp = null;
+            isPaused = false;
+            gameInterval = setInterval(updateGame, 20);
+            document.addEventListener('keydown', movePlayer);
+            setupTouchControls();
+        }
+
+        function updateGame() {
+            if (isPaused) return;
+
+            const difficultyFactor = getDifficultyFactor();
+            if (Math.random() < 0.02 + (level * 0.005 * difficultyFactor)) {
+                createObstacle();
+            }
+            if (Math.random() < 0.005 * difficultyFactor) {
+                createPowerUp();
+            }
+
+            moveObstacles();
+            movePowerUps();
+            checkCollisions();
+        }
+
+        function createObstacle() {
+            const obstacle = document.createElement('div');
+            obstacle.className = 'obstacle';
+            const obstacleType = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+            obstacle.style.backgroundImage = `url(${obstacleType.image})`;
+            obstacle.style.left = '400px';
+            obstacle.style.top = `${Math.random() * 370}px`;
+            document.getElementById('mini-game-area').appendChild(obstacle);
+            obstacles.push(obstacle);
+        }
+
+        function createPowerUp() {
+            const powerUp = document.createElement('div');
+            powerUp.className = 'power-up';
+            const powerUpType = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
+            powerUp.style.backgroundImage = `url(${powerUpType.image})`;
+            powerUp.style.left = '400px';
+            powerUp.style.top = `${Math.random() * 370}px`;
+            document.getElementById('mini-game-area').appendChild(powerUp);
+            powerUps.push(powerUp);
+        }
+
+        function moveObstacles() {
+            obstacles.forEach((obstacle, index) => {
+                obstacle.style.left = `${parseInt(obstacle.style.left) - (5 + level)}px`;
+                if (parseInt(obstacle.style.left) < -30) {
+                    obstacle.remove();
+                    obstacles.splice(index, 1);
+                    score++;
+                    updateScore();
+                    if (score % 10 === 0) {
+                        level++;
+                        updateLevel();
+                    }
+                }
+            });
+        }
+
+        function movePowerUps() {
+            powerUps.forEach((powerUp, index) => {
+                powerUp.style.left = `${parseInt(powerUp.style.left) - 3}px`;
+                if (parseInt(powerUp.style.left) < -25) {
+                    powerUp.remove();
+                    powerUps.splice(index, 1);
+                }
+            });
+        }
+
+        function movePlayer(event) {
+            if (isPaused) return;
+            const player = document.getElementById('player');
+            const playerRect = player.getBoundingClientRect();
+            const gameRect = document.getElementById('mini-game-area').getBoundingClientRect();
+            const speed = playerPowerUp === 'speed' ? 15 : 10;
+
+            switch(event.key) {
+                case 'ArrowUp':
+                case 'w':
+                    if (playerRect.top > gameRect.top)
+                        player.style.top = `${parseInt(player.style.top) - speed}px`;
+                    break;
+                case 'ArrowDown':
+                case 's':
+                    if (playerRect.bottom < gameRect.bottom)
+                        player.style.top = `${parseInt(player.style.top) + speed}px`;
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                    if (playerRect.left > gameRect.left)
+                        player.style.left = `${parseInt(player.style.left) - speed}px`;
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                    if (playerRect.right < gameRect.right)
+                        player.style.left = `${parseInt(player.style.left) + speed}px`;
+                    break;
+            }
+        }
+
+        function setupTouchControls() {
+            const gameArea = document.getElementById('mini-game-area');
+            let touchStartX, touchStartY;
+
+            gameArea.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            });
+
+            gameArea.addEventListener('touchmove', (e) => {
+                if (isPaused) return;
+                e.preventDefault();
+                const touchEndX = e.touches[0].clientX;
+                const touchEndY = e.touches[0].clientY;
+                const dx = touchEndX - touchStartX;
+                const dy = touchEndY - touchStartY;
+
+                const player = document.getElementById('player');
+                const speed = playerPowerUp === 'speed' ? 15 : 10;
+
+                player.style.left = `${parseInt(player.style.left) + dx * speed / 50}px`;
+                player.style.top = `${parseInt(player.style.top) + dy * speed / 50}px`;
+
+                touchStartX = touchEndX;
+                touchStartY = touchEndY;
+            });
+        }
+
+        function checkCollisions() {
+            const player = document.getElementById('player');
+            
+            obstacles.forEach((obstacle, index) => {
+                if (checkCollision(player, obstacle)) {
+                    if (playerPowerUp === 'shield') {
+                        obstacle.remove();
+                        obstacles.splice(index, 1);
+                        playerPowerUp = null;
+                        player.style.boxShadow = 'none';
+                    } else {
+                        endMiniGame();
+                    }
+                }
+            });
+
+            powerUps.forEach((powerUp, index) => {
+                if (checkCollision(player, powerUp)) {
+                    applyPowerUp(powerUp);
+                    powerUp.remove();
+                    powerUps.splice(index, 1);
+                }
+            });
+        }
+
+        function checkCollision(a, b) {
+            const aRect = a.getBoundingClientRect();
+            const bRect = b.getBoundingClientRect();
+            return !(
+                aRect.top + aRect.height < bRect.top ||
+                aRect.top > bRect.top + bRect.height ||
+                aRect.left + aRect.width < bRect.left ||
+                aRect.left > bRect.left + bRect.width
+            );
+        }
+
+        function applyPowerUp(powerUp) {
+            const player = document.getElementById('player');
+            const powerUpType = powerUpTypes.find(type => powerUp.style.backgroundImage.includes(type.image));
+            playerPowerUp = powerUpType.name.toLowerCase();
+            
+            switch(playerPowerUp) {
+                case 'speed':
+                    player.style.boxShadow = '0 0 10px #44ff44';
+                    setTimeout(() => {
+                        playerPowerUp = null;
+                        player.style.boxShadow = 'none';
+                    }, 5000);
+                    break;
+                case 'shield':
+                    player.style.boxShadow = '0 0 10px #4444ff';
+                    break;
+                case 'magnet':
+                    player.style.boxShadow = '0 0 10px #ff44ff';
+                    setTimeout(() => {
+                        playerPowerUp = null;
+                        player.style.boxShadow = 'none';
+                    }, 5000);
+                    break;
+                case 'shrink':
+                    const originalSize = player.style.width;
+                    player.style.width = `${parseInt(player.style.width) / 2}px`;
+                    player.style.height = `${parseInt(player.style.height) / 2}px`;
+                    setTimeout(() => {
+                        player.style.width = originalSize;
+                        player.style.height = originalSize;
+                        playerPowerUp = null;
+                    }, 5000);
+                    break;
+            }
+
+            if (settings.soundEffects) {
+                playSound('power-up-sound');
+            }
+        }
+
+        function endMiniGame() {
+            clearInterval(gameInterval);
+            document.removeEventListener('keydown', movePlayer);
+            obstacles.forEach(obstacle => obstacle.remove());
+            powerUps.forEach(powerUp => powerUp.remove());
+            obstacles = [];
+            powerUps = [];
+            updateHighScores();
+            if (settings.soundEffects) {
+                playSound('crash-sound');
+            }
+            alert(`Game Over! Your score: ${score}`);
+            hideAllScreens();
+            document.getElementById('game-area').style.display = 'block';
+        }
+
+        function updateHighScores() {
+            let highScores = JSON.parse(localStorage.getItem('highScores')) || [];
+            highScores.push({name: currentBody.name, score: score});
+            highScores.sort((a, b) => b.score - a.score);
+            highScores = highScores.slice(0, 5);
+            localStorage.setItem('highScores', JSON.stringify(highScores));
+        }
+
+        function showHighScores() {
+            hideAllScreens();
+            const highScoreList = document.getElementById('high-score-list');
+            highScoreList.innerHTML = '';
+            const highScores = JSON.parse(localStorage.getItem('highScores')) || [];
+            highScores.forEach((score, index) => {
+                const li = document.createElement('li');
+                li.textContent = `${score.name}: ${score.score}`;
+                highScoreList.appendChild(li);
+            });
+            document.getElementById('high-scores').style.display = 'block';
+        }
+
+        function closePlanetInfo() {
+            hideAllScreens();
+            document.getElementById('game-area').style.display = 'block';
+        }
+
+        function updateScore() {
+            document.getElementById('score-value').textContent = score;
+        }
+
+        function updateLevel() {
+            document.getElementById('level-value').textContent = level;
+        }
+
+        function toggleLabels() {
+            showLabels = !showLabels;
+            document.querySelectorAll('.label').forEach(label => {
+                label.style.display = showLabels ? 'block' : 'none';
+            });
+        }
+
+        function toggleLegend() {
+            showLegend = !showLegend;
+            document.getElementById('legend').style.display = showLegend ? 'block' : 'none';
+        }
+
+        function toggleMusic() {
+            settings.music = !settings.music;
+            const music = document.getElementById('background-music');
+            if (settings.music) {
+                music.play();
+            } else {
+                music.pause();
+            }
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            document.getElementById('pause-overlay').style.display = isPaused ? 'flex' : 'none';
+        }
+
+        function showSettings() {
+            hideAllScreens();
+            document.getElementById('settings').style.display = 'block';
+            document.getElementById('difficulty').value = settings.difficulty;
+            document.getElementById('sound-effects').checked = settings.soundEffects;
+            document.getElementById('music').checked = settings.music;
+        }
+
+        function saveSettings() {
+            settings.difficulty = document.getElementById('difficulty').value;
+            settings.soundEffects = document.getElementById('sound-effects').checked;
+            settings.music = document.getElementById('music').checked;
+            localStorage.setItem('gameSettings', JSON.stringify(settings));
+            showMenu();
+        }
+
+        function getDifficultyFactor() {
+            switch(settings.difficulty) {
+                case 'easy': return 0.8;
+                case 'normal': return 1;
+                case 'hard': return 1.2;
+                default: return 1;
+            }
+        }
+
+        function playSound(soundId) {
+            if (settings.soundEffects) {
+                const sound = document.getElementById(soundId);
+                sound.currentTime = 0;
+                sound.play();
+            }
+        }
+
+        // Preload images
+        function preloadImages() {
+            let imagesLoaded = 0;
+            const totalImages = celestialBodies.length + obstacleTypes.length + powerUpTypes.length;
+
+            const checkAllImagesLoaded = () => {
+                imagesLoaded++;
+                if (imagesLoaded === totalImages) {
+                    document.getElementById('loading-screen').style.display = 'none';
+                    showMenu();
+                }
+            };
+
+            celestialBodies.forEach(body => {
+                const img = new Image();
+                img.src = body.image;
+                img.alt = body.alt;
+                img.onload = checkAllImagesLoaded;
+            });
+
+            obstacleTypes.forEach(type => {
+                const img = new Image();
+                img.src = type.image;
+                img.alt = type.alt;
+                img.onload = checkAllImagesLoaded;
+            });
+
+            powerUpTypes.forEach(type => {
+                const img = new Image();
+                img.src = type.image;
+                img.alt = type.alt;
+                img.onload = checkAllImagesLoaded;
+            });
+        }
+
+        // Initialize the game
+        function init() {
+            const savedSettings = localStorage.getItem('gameSettings');
+            if (savedSettings) {
+                settings = JSON.parse(savedSettings);
+            }
+            preloadImages();
+        }
+
+        // Start the game
+        init();
+    </script>
+</body>
+</html>
